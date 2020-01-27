@@ -1,0 +1,15 @@
+require 'rubygems'
+require 'appium_lib'
+require 'appium_lib_core'
+require 'faker'
+require 'uri'
+require 'net/http'
+require 'json'
+require 'american_date'
+
+require_relative '../lib/constants.rb'
+require_relative '../lib/common_function.rb'
+require_relative '../lib/api_data_function'
+require_relative '../lib/datetime_common'
+require_relative '../lib/random_content'
+
