@@ -1,14 +1,7 @@
 source 'https://rubygems.org'
+ruby '2.5.1'
 
-# Specify your gem's dependencies in Appium.gemspec
-#gemspec
-# npm install -g appium
-# gem 'selenium-webdriver'
-gem 'bundler'
 gem 'json'
-gem 'nokogiri'
-
-
 gem 'appium_lib',         '~> 10.3.1'
 gem 'rest-client',        '~> 2.0.2'
 gem 'rspec',              '~> 3.6.0'
@@ -20,3 +13,9 @@ gem 'faker',              '~> 1.6'
 gem 'american_date',      '~> 1.1'
 gem 'appom',              '~> 1.1'
 gem 'cucumber',           '~> 3.1'
+gem 'rake',               '~> 13.0'
+gem 'dotenv'
+
+
+gem 'nokogiri',           '>= 1.10.7'
+gem 'rubyzip',            '>= 1.3.0'
