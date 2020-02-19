@@ -70,15 +70,26 @@ def post_to_api(url, request_body_xml, token)
   response
 end
 
-def delete_by_id(endpoint, id)
-  puts "deleting: #{endpoint}/#{id}"
-  api_url = "#{Host_Name}/#{endpoint}/#{id}"
+def delete_by_id(env, app_endpoint, id)
+  id_token = get_id_token(env)
+  token = "Bearer #{id_token}"
 
-  url = URI.parse(api_url)
-  request = Net::HTTP::Delete.new(url.path, POSTMAN_HEADER)
+  env_path = __dir__ + '/environment.json'
+  file = File.read(env_path)
+  env_data = JSON.parse(file)[env]
+  url = env_data['url']
+
+  url = URI.parse("#{url}/#{app_endpoint}/#{id}")
+  puts "deleting: #{url}"
 
   https = Net::HTTP.new(url.host, url.port)
   https.use_ssl = true
+
+  request = Net::HTTP::Delete.new(url.path)
+  request['Content-Type'] = 'application/vnd.api+json'
+  request['Accept'] = 'application/vnd.api+json'
+  request['Accept-Version'] = 'v0'
+  request['Authorization'] = token
 
   start_time = Time.now
   begin
@@ -130,30 +141,6 @@ def patch_by_id(url, id, request_body_xml, token)
   end
 end
 
-def get_all_applications(api_url)
-  # api_url = "#{Host_Name}/#{endpoint}/#{id}"
-
-  url = URI.parse(api_url)
-  request = Net::HTTP::Get.new(url.path, POSTMAN_HEADER)
-
-  https = Net::HTTP.new(url.host, url.port)
-  https.use_ssl = true
-
-  start_time = Time.now
-  begin
-    response_raw = https.request(request)
-  rescue Exception => e
-    sleep 1
-    puts e
-    retry until Time.now - start_time > 90
-  end
-
-  response = JSON.parse(response_raw.body)
-  puts "response: #{response}"
-
-  response
-end
-
 def seed_evaluate(env)
   id_token = get_id_token(env)
   token = "Bearer #{id_token}"
@@ -179,14 +166,16 @@ def seed_evaluate(env)
                            relationships: {
                                assignee: { data: { type: 'assignees', id: assignee_id } },
                                facility_location: { data: { type: 'locations', id: location_id } },
-                               provider_type: { data: { type: 'provider_types', id: env_data['provider_types_id'] } }
+                               provider_type: { data: { type: 'provider_types', id: env_data['provider_types_id'] } },
+                               provider_subtype: { data: { type: 'facility_types', id: env_data['provider_subtype_id'] } },
                            } } }
   provider = post_to_api("#{url}/providers/providers", provider_xml, token)['data']
 
   service_xml = { data: { type: 'services',
                            attributes: { capacity_usage: 4, max_capacity: 10 },
                            relationships: {
-                               provider: { data: { type: 'providers', id: provider['id'] } }
+                               provider: { data: { type: 'providers', id: provider['id'] } },
+                               service_type: { data: { type: 'service_types', id: env_data['service_types_id'] } },
                            } } }
   post_to_api("#{url}/providers/services", service_xml, token)
 
@@ -235,13 +224,13 @@ def seed_evaluate(env)
                                          visits: { data: { type: 'visits', id: visit_id } }
                                      } } }
   patch_by_id("#{url}/providers/providers", provider['id'], providers_patch_xml, token)
-
-  admin_xml = { data: { type: 'form_application_categories',
-                        attributes: { provider_type_id: env_data['provider_types_id'], license_status_id: env_data['license_status_id'] },
-                        relationships: {
-                            form: { data: { type: 'forms', id: env_data['form_id'] } }
-                        } } }
-  post_to_api("#{url}/admin/form_application_categories", admin_xml, token)
+  #
+  # admin_xml = { data: { type: 'form_application_categories',
+  #                       attributes: { provider_type_id: env_data['provider_types_id'], license_status_id: env_data['license_status_id'] },
+  #                       relationships: {
+  #                           form: { data: { type: 'forms', id: env_data['form_id'] } }
+  #                       } } }
+  # post_to_api("#{url}/admin/form_application_categories", admin_xml, token)
 
   { provider_id: provider['id'], provider_name: provider['attributes']['name']}
 end
